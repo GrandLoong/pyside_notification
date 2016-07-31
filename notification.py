@@ -41,11 +41,17 @@ class Notification(ui_form, ui_base):
         self.desktop = QtGui.QDesktopWidget()
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.SubWindow)
         self.setupUi(self)
+        self.app_dir = os.path.dirname(__file__)
         self.f = 1.0
         self.x = self.desktop.availableGeometry().width()
         self.workThread = WorkThread()
-        
+        self.set_transparency(True)
+        self.label_icon.setIcon(QtGui.QIcon(self.add_icon('push-notification.png')))
         self.createNotification(MSSG)
+    
+    
+    def add_icon(self, icon_name):
+        return pathjoin(self.app_dir, 'ui_elements', icon_name)
     
     def createNotification(self, msg):
         self.lbl_mssg.setText(msg)
@@ -57,6 +63,14 @@ class Notification(ui_form, ui_base):
         
         self.workThread.start()
         return
+    
+    def set_transparency(self, enabled):
+        if enabled:
+            self.setAutoFillBackground(False)
+        else:
+            self.setAttribute(QtCore.Qt.WA_NoSystemBackground, False)
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground, enabled)
+        self.repaint()
     
     # Quit when done
     @staticmethod

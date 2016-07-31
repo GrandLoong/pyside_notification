@@ -1,12 +1,35 @@
 import sys
 import os
-from os.path import join as pathjoin
-from PySide import QtCore, QtGui
 import time
+from os.path import join as pathjoin
+import error
+
+try:
+    from PySide import QtCore, QtGui
+except ImportError:
+    raise error.PysideNotFoundError()
 from ui_elements.loadui import loadUiType, loadStyleSheet
 
-uiFile = pathjoin(os.path.dirname(__file__), 'resources/not.ui')
+uiFile = pathjoin(os.path.dirname(__file__), 'ui_elements/notification.ui')
+css_file = pathjoin(os.path.dirname(__file__), 'ui_elements/notification.css')
 ui_form, ui_base = loadUiType(uiFile)
+
+
+# The Worker
+class WorkThread(QtCore.QThread):
+    def __init__(self):
+        QtCore.QThread.__init__(self)
+    
+    def run(self):
+        # Bring em in :D
+        for i in range(336):
+            time.sleep(0.001)
+            self.emit(QtCore.SIGNAL('update(QString)'), "ping")
+        # Hide u bitch :P
+        for j in range(200):
+            time.sleep(0.1)
+            self.emit(QtCore.SIGNAL('vanish(QString)'), "ping")
+        return
 
 
 class Notification(ui_form, ui_base):
@@ -18,23 +41,16 @@ class Notification(ui_form, ui_base):
         self.desktop = QtGui.QDesktopWidget()
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.SubWindow)
         self.setupUi(self)
+        self.f = 1.0
+        self.x = self.desktop.availableGeometry().width()
+        self.workThread = WorkThread()
         
         self.createNotification(MSSG)
     
-    def closeEvent(self, event):
-        self.close.emit()
-    
-    def createNotification(self, mssg):
-        self.x = self.desktop.availableGeometry().width()
-        
-        # Set the opacity
-        self.f = 1.0
-        
-        # Set the message
-        self.lbl_mssg.setText(mssg)
+    def createNotification(self, msg):
+        self.lbl_mssg.setText(msg)
         
         # Start Worker
-        self.workThread = WorkThread()
         self.connect(self.workThread, QtCore.SIGNAL("update(QString)"), self.animate)
         self.connect(self.workThread, QtCore.SIGNAL("vanish(QString)"), self.disappear)
         self.connect(self.workThread, QtCore.SIGNAL("finished()"), self.done)
@@ -43,13 +59,13 @@ class Notification(ui_form, ui_base):
         return
     
     # Quit when done
-    def done(self):
-        self.hide()
-        return
+    @staticmethod
+    def done():
+        sys.exit()
     
     # Reduce opacity of the window
     def disappear(self):
-        self.f -= 0.02
+        self.f -= 0.005
         self.setWindowOpacity(self.f)
         return
     
@@ -61,25 +77,9 @@ class Notification(ui_form, ui_base):
         return
 
 
-# The Worker
-class WorkThread(QtCore.QThread):
-    def __init__(self):
-        QtCore.QThread.__init__(self)
-    
-    def run(self):
-        # Bring em in :D
-        for i in range(336):
-            time.sleep(0.0001)
-            self.emit(QtCore.SIGNAL('update(QString)'), "ping")
-        # Hide u bitch :P
-        for j in range(50):
-            time.sleep(0.1)
-            self.emit(QtCore.SIGNAL('vanish(QString)'), "ping")
-        return
-
-
 def Notify(msg):
     app = QtGui.QApplication(sys.argv)
-    myapp = Notification(msg)
-    myapp.show()
+    gui = Notification(msg)
+    gui.setStyleSheet(loadStyleSheet(css_file))
+    gui.show()
     sys.exit(app.exec_())

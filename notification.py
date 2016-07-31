@@ -27,7 +27,7 @@ class WorkThread(QtCore.QThread):
             self.emit(QtCore.SIGNAL('update(QString)'), "ping")
         # Hide u bitch :P
         for j in range(200):
-            time.sleep(0.1)
+            time.sleep(0.05)
             self.emit(QtCore.SIGNAL('vanish(QString)'), "ping")
         return
 
@@ -79,7 +79,7 @@ class Notification(ui_form, ui_base):
     
     # Reduce opacity of the window
     def disappear(self):
-        self.f -= 0.005
+        self.f -= 0.01
         self.setWindowOpacity(self.f)
         return
     
